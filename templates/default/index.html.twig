@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Fioulmarket - Test</h1>
+
+    <div class="gallery cf" id="image-container">
+        {% for image in images %}
+            <div>
+                <img src="{{ image }}" title="{{ image }}"/>
+            </div>
+        {% endfor %}
+    </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let remainingUrls = {{ remainingUrls|json_encode|raw }};
+    let batchSize = 10;
+
+    function loadMoreImages() {
+        if (remainingUrls.length === 0) return;
+
+        let urlsToLoad = remainingUrls.slice(0, batchSize);
+        remainingUrls = remainingUrls.slice(batchSize);
+
+        $.get('{{ path('load_more_images') }}', { urls: urlsToLoad }, function(response) {
+            if (Array.isArray(response.images)) {
+                response.images.forEach(function(image) {
+                    $('#image-container').append('<div><img src="' + image + '" title="' + image + '"/></div>');
+                });
+                checkContentHeight();
+            } else {
+                console.error('Invalid response format:', response);
+            }
+        });
+    }
+
+    function checkContentHeight() {
+        if ($(document).height() <= $(window).height()) {
+            loadMoreImages();
+        }
+    }
+
+    $(window).on('scroll', function() {
+        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            loadMoreImages();
+        }
+    });
+
+    $(document).ready(function() {
+        checkContentHeight();
+    });
+</script>
+
+{% endblock %}
